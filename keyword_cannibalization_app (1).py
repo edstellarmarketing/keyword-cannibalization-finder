@@ -27,44 +27,41 @@ st.markdown("""
 /* ── Import fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
-/* ── Root variables ── */
+/* ── Root variables — works on both light & dark Streamlit themes ── */
 :root {
-    --navy:      #0F2340;
-    --blue:      #1B4F8A;
-    --mid-blue:  #2E6DA4;
-    --sky:       #4A9FD5;
-    --pale:      #D6E8F5;
     --orange:    #E8651A;
-    --orange-lt: #FDE8D8;
+    --orange-lt: rgba(232,101,26,.18);
+    --orange-br: rgba(232,101,26,.5);
+    --sky:       #4A9FD5;
+    --pale-blue: rgba(74,159,213,.15);
     --white:     #FFFFFF;
-    --off-white: #F7FAFD;
-    --grey-100:  #EEF3F8;
-    --grey-200:  #D4DFE9;
-    --grey-400:  #8BA3BC;
-    --grey-700:  #3D5468;
-    --red:       #C0392B;
-    --red-lt:    #FDECEA;
-    --amber:     #856404;
-    --amber-lt:  #FFF8E1;
-    --green:     #1A6B3A;
-    --green-lt:  #E8F5EE;
     --radius:    10px;
-    --shadow:    0 2px 12px rgba(15,35,64,.10);
-    --shadow-lg: 0 6px 30px rgba(15,35,64,.14);
+    /* Semantic — always visible regardless of theme */
+    --txt:       #FFFFFF;          /* primary text on custom elements */
+    --txt-muted: rgba(255,255,255,.65);
+    --txt-label: rgba(255,255,255,.5);
+    --card-bg:   rgba(255,255,255,.07);
+    --card-bd:   rgba(255,255,255,.12);
+    --shadow:    0 2px 14px rgba(0,0,0,.25);
+    --shadow-lg: 0 6px 30px rgba(0,0,0,.35);
+    /* Severity */
+    --red:       #FF6B6B;
+    --red-bg:    rgba(255,107,107,.15);
+    --amber:     #FFB340;
+    --amber-bg:  rgba(255,179,64,.15);
+    --green:     #4ADE80;
+    --green-bg:  rgba(74,222,128,.15);
 }
 
 /* ── Base typography ── */
-html, body, [class*="css"] {
-    font-family: 'DM Sans', sans-serif;
-    color: var(--navy);
-}
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 
 /* ── Hide default Streamlit chrome ── */
 #MainMenu, footer, header { visibility: hidden; }
 
 /* ── App header banner ── */
 .app-header {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 60%, var(--mid-blue) 100%);
+    background: linear-gradient(135deg, #0F2340 0%, #1B4F8A 60%, #2E6DA4 100%);
     border-radius: var(--radius);
     padding: 32px 36px 28px;
     margin-bottom: 28px;
@@ -91,12 +88,12 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
     font-size: 2rem;
-    color: var(--white);
+    color: #FFFFFF !important;
     margin: 0 0 6px;
     position: relative; z-index: 1;
 }
 .app-header p {
-    color: rgba(255,255,255,.72);
+    color: rgba(255,255,255,.75) !important;
     font-size: 0.95rem;
     margin: 0;
     position: relative; z-index: 1;
@@ -104,8 +101,8 @@ html, body, [class*="css"] {
 .app-header .badge {
     display: inline-block;
     background: rgba(232,101,26,.25);
-    border: 1px solid rgba(232,101,26,.45);
-    color: #FFB380;
+    border: 1px solid rgba(232,101,26,.5);
+    color: #FFB380 !important;
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: .06em;
@@ -120,7 +117,7 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     font-size: 1.15rem;
-    color: var(--navy);
+    color: #FFFFFF !important;
     border-left: 4px solid var(--orange);
     padding-left: 12px;
     margin: 28px 0 16px;
@@ -130,8 +127,8 @@ html, body, [class*="css"] {
 .kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
 .kpi-card {
     flex: 1; min-width: 130px;
-    background: var(--white);
-    border: 1px solid var(--grey-200);
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
     border-radius: var(--radius);
     padding: 18px 20px 14px;
     box-shadow: var(--shadow);
@@ -143,63 +140,51 @@ html, body, [class*="css"] {
     font-weight: 600;
     letter-spacing: .07em;
     text-transform: uppercase;
-    color: var(--grey-400);
+    color: var(--txt-label) !important;
     margin-bottom: 6px;
 }
 .kpi-card .kpi-value {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
     font-size: 1.9rem;
-    color: var(--navy);
+    color: #FFFFFF !important;
     line-height: 1;
 }
 .kpi-card .kpi-sub {
     font-size: 0.78rem;
-    color: var(--grey-400);
+    color: var(--txt-muted) !important;
     margin-top: 4px;
 }
-.kpi-card.accent .kpi-value { color: var(--orange); }
-.kpi-card.danger .kpi-value { color: var(--red); }
-.kpi-card.success .kpi-value { color: var(--green); }
-
-/* ── Severity pills ── */
-.pill {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-.pill-high   { background: var(--red-lt);   color: var(--red);   }
-.pill-medium { background: var(--amber-lt); color: var(--amber); }
-.pill-low    { background: var(--green-lt); color: var(--green); }
+.kpi-card.accent .kpi-value { color: var(--orange) !important; }
+.kpi-card.danger .kpi-value { color: var(--red) !important; }
+.kpi-card.success .kpi-value { color: var(--green) !important; }
 
 /* ── Info box ── */
 .info-box {
-    background: var(--pale);
-    border-left: 4px solid var(--mid-blue);
+    background: rgba(74,159,213,.15);
+    border-left: 4px solid #4A9FD5;
     border-radius: 0 var(--radius) var(--radius) 0;
     padding: 14px 18px;
     font-size: 0.88rem;
-    color: var(--blue);
+    color: #A8D8F0 !important;
     margin: 16px 0;
 }
 
 /* ── Filter note ── */
 .filter-note {
-    background: var(--orange-lt);
+    background: rgba(232,101,26,.15);
     border-left: 4px solid var(--orange);
     border-radius: 0 var(--radius) var(--radius) 0;
     padding: 10px 14px;
     font-size: 0.82rem;
-    color: var(--navy);
+    color: #FFD0A8 !important;
     margin: 8px 0 16px;
 }
 
 /* ── Rec card ── */
 .rec-card {
-    background: var(--off-white);
-    border: 1px solid var(--grey-200);
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
     border-radius: var(--radius);
     padding: 16px 18px;
     margin-bottom: 10px;
@@ -208,57 +193,55 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     font-size: 0.92rem;
-    color: var(--navy);
+    color: #FFFFFF !important;
     margin: 0 0 6px;
 }
-.rec-card p { font-size: 0.84rem; color: var(--grey-700); margin: 0; }
+.rec-card p { font-size: 0.84rem; color: var(--txt-muted) !important; margin: 0; }
 
 /* ── Streamlit dataframe tweak ── */
 .stDataFrame { border-radius: var(--radius); overflow: hidden; }
 
 /* ── Download btn override ── */
 .stDownloadButton > button {
-    background: var(--navy) !important;
-    color: var(--white) !important;
-    border: none !important;
+    background: rgba(255,255,255,.1) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,.25) !important;
     border-radius: var(--radius) !important;
     font-weight: 600 !important;
     padding: 10px 22px !important;
-    transition: background .2s !important;
+    transition: all .2s !important;
 }
 .stDownloadButton > button:hover {
-    background: var(--blue) !important;
+    background: rgba(255,255,255,.18) !important;
+    border-color: rgba(255,255,255,.4) !important;
 }
 
 /* ── Primary button ── */
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, var(--orange) 0%, #c45510 100%) !important;
-    color: var(--white) !important;
+    color: #FFFFFF !important;
     border: none !important;
     border-radius: var(--radius) !important;
     font-family: 'Syne', sans-serif !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
     padding: 12px 32px !important;
-    box-shadow: 0 4px 14px rgba(232,101,26,.35) !important;
+    box-shadow: 0 4px 14px rgba(232,101,26,.4) !important;
     transition: all .2s !important;
 }
 .stButton > button[kind="primary"]:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(232,101,26,.45) !important;
+    box-shadow: 0 6px 20px rgba(232,101,26,.55) !important;
 }
 
-/* ── Sidebar styling ── */
-[data-testid="stSidebar"] {
-    background: var(--off-white);
-    border-right: 1px solid var(--grey-200);
-}
+/* ── Sidebar: force visible label text ── */
 [data-testid="stSidebar"] .stNumberInput label,
 [data-testid="stSidebar"] .stCheckbox label,
-[data-testid="stSidebar"] .stSelectbox label {
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] div {
     font-size: 0.83rem;
-    font-weight: 500;
-    color: var(--grey-700);
 }
 .sidebar-section {
     font-family: 'Syne', sans-serif;
@@ -266,37 +249,26 @@ html, body, [class*="css"] {
     font-size: 0.78rem;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--grey-400);
+    color: var(--orange) !important;
     padding: 12px 0 6px;
-    border-top: 1px solid var(--grey-200);
+    border-top: 1px solid rgba(255,255,255,.1);
     margin-top: 8px;
 }
 
 /* ── Tab bar ── */
 .stTabs [data-baseweb="tab-list"] {
     gap: 4px;
-    border-bottom: 2px solid var(--grey-200);
+    border-bottom: 2px solid rgba(255,255,255,.1);
 }
 .stTabs [data-baseweb="tab"] {
     font-family: 'Syne', sans-serif;
     font-weight: 600;
     font-size: 0.88rem;
     padding: 8px 20px;
-    color: var(--grey-700);
     border-radius: 8px 8px 0 0;
 }
 .stTabs [aria-selected="true"] {
-    color: var(--navy) !important;
-    background: var(--pale) !important;
     border-bottom: 3px solid var(--orange) !important;
-}
-
-/* ── Expander ── */
-.streamlit-expanderHeader {
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--navy);
 }
 
 /* ── Responsive ── */
@@ -571,7 +543,7 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section">Recommended Settings</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div style="font-size:0.78rem; color: #3D5468; line-height:1.7;">
+    <div style="font-size:0.78rem; line-height:1.8; opacity:0.85;">
     <b>For highest impact:</b><br>
     • Max Position → <b>10</b><br>
     • Min Impressions → <b>500</b><br>
@@ -991,9 +963,9 @@ with tab4:
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center; font-size:0.78rem; color:#8BA3BC; padding:8px 0 20px;">
+<div style="text-align:center; font-size:0.78rem; color:rgba(255,255,255,.4); padding:8px 0 20px;">
     Built for Edstellar SEO team · Based on the Keyword Cannibalization Finder by 
-    <a href="https://www.leefoot.com" target="_blank" style="color:#2E6DA4;">Lee Foot</a> ·
+    <a href="https://www.leefoot.com" target="_blank" style="color:#4A9FD5;">Lee Foot</a> ·
     Smart geo-template filtering for corporate training page series
 </div>
 """, unsafe_allow_html=True)
