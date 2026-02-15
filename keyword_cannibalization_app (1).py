@@ -517,6 +517,250 @@ def to_csv(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
 
 
+def generate_high_severity_docx(cannibs: pd.DataFrame,
+                                 query_sum_df: pd.DataFrame) -> bytes:
+    """
+    Generate a Word .docx report matching the High Severity tab layout:
+    - Cover section with summary stats
+    - One section per query: position / impressions header, URL table, suggested action
+    """
+    import subprocess, json, tempfile, os
+
+    high_queries = query_sum_df[query_sum_df['_sev'] == 'High']['Query'].tolist()
+    if not high_queries:
+        return b""
+
+    # Build data structure to pass to JS
+    report_data = []
+    for q in high_queries:
+        qdata = cannibs[cannibs['query'] == q].copy()
+        qdata['_score'] = qdata['impressions'] + (qdata['clicks'] * 10)
+        qdata = qdata.sort_values('_score', ascending=False)
+        best_slug = qdata.iloc[0]['slug']
+        weaker    = qdata.iloc[1:]['slug'].tolist()
+        best_pos  = round(float(qdata['position'].min()), 1)
+        total_imp = int(qdata['impressions'].sum())
+        rows = []
+        for _, r in qdata.iterrows():
+            rows.append({
+                'slug':      str(r['slug']),
+                'clicks':    int(r['clicks']),
+                'impressions': int(r['impressions']),
+                'ctr':       round(float(r['ctr']), 2),
+                'position':  round(float(r['position']), 1),
+                'competing': int(r['competing_pages']),
+                'isBest':    str(r['slug']) == best_slug,
+            })
+        report_data.append({
+            'query':      q,
+            'bestSlug':   best_slug,
+            'weakerSlugs': weaker,
+            'bestPos':    best_pos,
+            'totalImp':   total_imp,
+            'numPages':   len(qdata),
+            'rows':       rows,
+        })
+
+    # Summary stats
+    summary = {
+        'totalHigh':   len(high_queries),
+        'totalImp':    int(query_sum_df[query_sum_df['_sev']=='High']['Impressions'].sum()),
+        'totalClicks': int(query_sum_df[query_sum_df['_sev']=='High']['Url Clicks'].sum()),
+        'date':        pd.Timestamp.now().strftime('%B %d, %Y'),
+    }
+
+    payload = json.dumps({'summary': summary, 'queries': report_data})
+
+    # Write JS script
+    js_script = r"""
+const fs = require('fs');
+const {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
+} = require('docx');
+
+const data    = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const summary = data.summary;
+const queries = data.queries;
+
+const NAVY='0F2340', BLUE='1B4F8A', MID_BLUE='2E6DA4', ORANGE='E8651A';
+const WHITE='FFFFFF', BEST_BG='E8F5EE', TABLE_HD='1B4F8A';
+const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: 'D4DFE9' };
+const cellBorder = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+function spacer(pts) {
+  return new Paragraph({ children:[new TextRun('')], spacing:{before:pts*20,after:0} });
+}
+function sectionRule(color) {
+  return new Paragraph({
+    border:{ bottom:{style:BorderStyle.SINGLE, size:6, color:color||ORANGE, space:1} },
+    spacing:{before:0,after:120}, children:[],
+  });
+}
+function hdrCell(text, width) {
+  return new TableCell({
+    borders:cellBorder, width:{size:width,type:WidthType.DXA},
+    shading:{fill:TABLE_HD, type:ShadingType.CLEAR},
+    margins:{top:80,bottom:80,left:100,right:100},
+    children:[new Paragraph({children:[new TextRun({text,bold:true,color:WHITE,size:18,font:'Arial'})]})],
+  });
+}
+function dataCell(text, width, isBest, alignRight) {
+  return new TableCell({
+    borders:cellBorder, width:{size:width,type:WidthType.DXA},
+    shading:{fill:isBest?BEST_BG:WHITE, type:ShadingType.CLEAR},
+    margins:{top:60,bottom:60,left:100,right:100},
+    children:[new Paragraph({
+      alignment:alignRight?AlignmentType.RIGHT:AlignmentType.LEFT,
+      children:[new TextRun({text:String(text),size:18,font:'Arial',bold:isBest,color:isBest?'1A6B3A':'1A1A2E'})],
+    })],
+  });
+}
+function kpiCell(label, value, width) {
+  return new TableCell({
+    borders:cellBorder, width:{size:width,type:WidthType.DXA},
+    shading:{fill:'D6E8F5', type:ShadingType.CLEAR},
+    margins:{top:100,bottom:100,left:140,right:140},
+    children:[
+      new Paragraph({children:[new TextRun({text:String(value),bold:true,size:32,font:'Arial',color:NAVY})]}),
+      new Paragraph({children:[new TextRun({text:label,size:16,font:'Arial',color:'5A7FA0'})]}),
+    ],
+  });
+}
+
+const children = [];
+
+// Title block
+children.push(new Paragraph({
+  children:[new TextRun({text:'Edstellar  ·  Keyword Cannibalization Report',size:20,font:'Arial',bold:true,color:WHITE})],
+  shading:{fill:NAVY,type:ShadingType.CLEAR},
+  spacing:{before:0,after:0}, indent:{left:200},
+}));
+children.push(new Paragraph({
+  children:[new TextRun({text:'High Severity Issues — Urgent Fixes',size:48,bold:true,font:'Arial',color:WHITE})],
+  shading:{fill:NAVY,type:ShadingType.CLEAR},
+  spacing:{before:120,after:0}, indent:{left:200},
+}));
+children.push(new Paragraph({
+  children:[new TextRun({text:'Best position ≤10  ·  Impressions ≥1,000  ·  Generated: '+summary.date,size:20,font:'Arial',color:'FFB380'})],
+  shading:{fill:NAVY,type:ShadingType.CLEAR},
+  spacing:{before:80,after:280}, indent:{left:200},
+}));
+
+// KPI row
+const kpiW = Math.floor(9360/3);
+children.push(new Table({
+  width:{size:9360,type:WidthType.DXA}, columnWidths:[kpiW,kpiW,9360-kpiW*2],
+  rows:[new TableRow({children:[
+    kpiCell('High Severity Queries', summary.totalHigh, kpiW),
+    kpiCell('Total Impressions at Stake', summary.totalImp.toLocaleString(), kpiW),
+    kpiCell('Total Clicks at Stake', summary.totalClicks.toLocaleString(), 9360-kpiW*2),
+  ]})],
+}));
+children.push(spacer(10));
+children.push(new Paragraph({
+  children:[new TextRun({text:'🚨  These queries rank on page 1 but split click potential across multiple URLs. Consolidating them will have the most direct impact on organic traffic.',size:18,font:'Arial',color:'5A3000',italics:true})],
+  shading:{fill:'FDE8D8',type:ShadingType.CLEAR},
+  border:{left:{style:BorderStyle.SINGLE,size:16,color:ORANGE}},
+  indent:{left:200,right:200}, spacing:{before:100,after:100},
+}));
+children.push(spacer(14));
+children.push(sectionRule(ORANGE));
+
+// Per-query sections
+const COL_WIDTHS=[3200,900,1300,1000,1360,1600];
+const COL_HEADERS=['Landing Page','Url Clicks','Impressions','URL CTR (%)','Average Position','Competing Pages'];
+
+queries.forEach((q,qi)=>{
+  children.push(new Paragraph({
+    children:[
+      new TextRun({text:'🔴  ',size:24,font:'Arial'}),
+      new TextRun({text:q.query,size:26,bold:true,font:'Arial',color:NAVY}),
+      new TextRun({text:'  —  '+q.numPages+' pages · pos '+q.bestPos+' · '+q.totalImp.toLocaleString()+' impressions',size:20,font:'Arial',color:'5A7FA0'}),
+    ],
+    spacing:{before:180,after:80},
+  }));
+
+  const headerCells = COL_HEADERS.map((h,i)=>hdrCell(h,COL_WIDTHS[i]));
+  const dataRows = q.rows.map(row=>new TableRow({children:[
+    dataCell(row.slug,       COL_WIDTHS[0],row.isBest,false),
+    dataCell(row.clicks,     COL_WIDTHS[1],row.isBest,true),
+    dataCell(row.impressions,COL_WIDTHS[2],row.isBest,true),
+    dataCell(row.ctr,        COL_WIDTHS[3],row.isBest,true),
+    dataCell(row.position,   COL_WIDTHS[4],row.isBest,true),
+    dataCell(row.competing,  COL_WIDTHS[5],row.isBest,true),
+  ]}));
+
+  children.push(new Table({
+    width:{size:9360,type:WidthType.DXA}, columnWidths:COL_WIDTHS,
+    rows:[new TableRow({children:headerCells}),...dataRows],
+  }));
+
+  const weakerText = q.weakerSlugs.slice(0,2).join(', ')+(q.weakerSlugs.length>2?` +${q.weakerSlugs.length-2} more`:'');
+  children.push(new Paragraph({
+    children:[
+      new TextRun({text:'Suggested action: ',bold:true,size:18,font:'Arial',color:NAVY}),
+      new TextRun({text:'Consolidate ',size:18,font:'Arial',color:'5A3000'}),
+      new TextRun({text:weakerText,bold:true,size:18,font:'Courier New',color:MID_BLUE}),
+      new TextRun({text:' into ',size:18,font:'Arial',color:'5A3000'}),
+      new TextRun({text:q.bestSlug,bold:true,size:18,font:'Courier New',color:'1A6B3A'}),
+      new TextRun({text:' (highest traffic authority) · use ',size:18,font:'Arial',color:'5A3000'}),
+      new TextRun({text:'rel=canonical',bold:true,size:18,font:'Courier New',color:MID_BLUE}),
+      new TextRun({text:' or 301 redirect on weaker pages · strengthen internal links to ',size:18,font:'Arial',color:'5A3000'}),
+      new TextRun({text:q.bestSlug,bold:true,size:18,font:'Courier New',color:'1A6B3A'}),
+      new TextRun({text:'.',size:18,font:'Arial',color:'5A3000'}),
+    ],
+    shading:{fill:'FFF8E1',type:ShadingType.CLEAR},
+    border:{left:{style:BorderStyle.SINGLE,size:14,color:'F0A500',space:1}},
+    indent:{left:160,right:160}, spacing:{before:80,after:80},
+  }));
+
+  if(qi<queries.length-1){ children.push(spacer(6)); children.push(sectionRule('D4DFE9')); }
+});
+
+// Footer
+children.push(spacer(20));
+children.push(new Paragraph({
+  children:[new TextRun({text:'Generated by Edstellar Keyword Cannibalization Finder  ·  '+summary.date,size:16,font:'Arial',color:'8BA3BC',italics:true})],
+  alignment:AlignmentType.CENTER,
+  border:{top:{style:BorderStyle.SINGLE,size:2,color:'D4DFE9',space:4}},
+  spacing:{before:200,after:0},
+}));
+
+const doc = new Document({
+  styles:{ default:{ document:{ run:{ font:'Arial', size:20 } } } },
+  sections:[{
+    properties:{ page:{ size:{width:12240,height:15840}, margin:{top:720,right:900,bottom:900,left:900} } },
+    children,
+  }],
+});
+
+Packer.toBuffer(doc).then(buf=>{ fs.writeFileSync(process.argv[3],buf); console.log('OK '+buf.length+' bytes'); })
+  .catch(e=>{ console.error(e.message); process.exit(1); });
+"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        data_file = os.path.join(tmpdir, 'data.json')
+        out_file  = os.path.join(tmpdir, 'report.docx')
+        js_file   = os.path.join(tmpdir, 'gen.js')
+
+        with open(data_file, 'w') as f:
+            f.write(payload)
+        with open(js_file, 'w') as f:
+            f.write(js_script)
+
+        result = subprocess.run(
+            ['node', js_file, data_file, out_file],
+            capture_output=True, text=True, timeout=30,
+            env={**os.environ, 'NODE_PATH': '/home/claude/.npm-global/lib/node_modules'}
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Doc generation failed: {result.stderr}")
+
+        with open(out_file, 'rb') as f:
+            return f.read()
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
@@ -897,9 +1141,23 @@ with tab3:
                     f"links to `{best_slug}`."
                 )
 
-        st.download_button("📥 Download High Severity CSV",
-            data=to_csv(high_detail_display),
-            file_name="cannibalization_high_severity.csv", mime="text/csv")
+        # ── Download buttons ──────────────────────────────────────────────
+        dl_c1, dl_c2 = st.columns(2)
+        with dl_c1:
+            st.download_button("📥 Download CSV",
+                data=to_csv(high_detail_display),
+                file_name="cannibalization_high_severity.csv", mime="text/csv")
+        with dl_c2:
+            try:
+                docx_bytes = generate_high_severity_docx(cannibs, query_sum)
+                st.download_button(
+                    "📄 Download Word Report (.docx)",
+                    data=docx_bytes,
+                    file_name="high_severity_cannibalization_report.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            except Exception as e:
+                st.warning(f"Word export unavailable: {e}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 4: Recommendations
