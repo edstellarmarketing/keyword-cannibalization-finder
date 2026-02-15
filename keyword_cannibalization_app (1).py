@@ -817,6 +817,14 @@ with tab1:
     st.dataframe(display_qs.drop(columns=['_sev'], errors='ignore'),
                  use_container_width=True, hide_index=True)
 
+    # Build detail export — referenced by Excel download button
+    detail_export = cannibs.rename(columns={
+        'query': 'Query', 'slug': 'Landing Page',
+        'clicks': 'Url Clicks', 'impressions': 'Impressions',
+        'ctr': 'URL CTR (%)', 'position': 'Average Position',
+        'competing_pages': 'Competing Pages',
+    })
+
     dl1, dl2 = st.columns(2)
     with dl1:
         st.download_button("📥 Download CSV",
