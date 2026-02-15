@@ -59,59 +59,6 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 /* ── Hide default Streamlit chrome ── */
 #MainMenu, footer, header { visibility: hidden; }
 
-/* ── App header banner ── */
-.app-header {
-    background: linear-gradient(135deg, #0F2340 0%, #1B4F8A 60%, #2E6DA4 100%);
-    border-radius: var(--radius);
-    padding: 32px 36px 28px;
-    margin-bottom: 28px;
-    position: relative;
-    overflow: hidden;
-}
-.app-header::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    background: rgba(74,159,213,.15);
-}
-.app-header::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; left: 40%;
-    width: 160px; height: 160px;
-    border-radius: 50%;
-    background: rgba(232,101,26,.12);
-}
-.app-header h1 {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 2rem;
-    color: #FFFFFF !important;
-    margin: 0 0 6px;
-    position: relative; z-index: 1;
-}
-.app-header p {
-    color: rgba(255,255,255,.75) !important;
-    font-size: 0.95rem;
-    margin: 0;
-    position: relative; z-index: 1;
-}
-.app-header .badge {
-    display: inline-block;
-    background: rgba(232,101,26,.25);
-    border: 1px solid rgba(232,101,26,.5);
-    color: #FFB380 !important;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 10px;
-}
-
 /* ── Section headers ── */
 .section-hdr {
     font-family: 'Syne', sans-serif;
@@ -802,15 +749,6 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ══════════════════════════════════════════════════════════════════════════════
-
-st.markdown("""
-<div class="app-header">
-    <div class="badge">SEO Intelligence</div>
-    <h1>🎯 Keyword Cannibalization Finder</h1>
-    <p>Identify queries where multiple pages compete · Filter geo-templates · Export prioritized fix list</p>
-</div>
-""", unsafe_allow_html=True)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FILE UPLOAD
