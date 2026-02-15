@@ -501,8 +501,13 @@ def build_query_summary(df: pd.DataFrame) -> pd.DataFrame:
     """One-row-per-query grouped view — uses Edstellar GSC column labels."""
     rows = []
     for q, grp in df.groupby('query'):
-        grp = grp.sort_values('position')
-        best = grp.iloc[0]
+        # Pick the canonical "best" page by traffic authority:
+        # Score = impressions + (clicks * 10) so clicks break ties on equal impressions.
+        # This ensures we always recommend consolidating INTO the page with real traffic,
+        # not the one that merely has the lowest position number.
+        grp = grp.copy()
+        grp['_score'] = grp['impressions'] + (grp['clicks'] * 10)
+        best = grp.sort_values('_score', ascending=False).iloc[0]
         rows.append({
             'Query':                   q,
             'Competing Pages':         len(grp),
@@ -514,7 +519,7 @@ def build_query_summary(df: pd.DataFrame) -> pd.DataFrame:
             'Position Spread':         round(grp['position'].max() - grp['position'].min(), 1),
             'Best Landing Page':       best['slug'],
             'All Landing Pages':       ' | '.join(
-                grp.sort_values('impressions', ascending=False)['slug'].tolist()
+                grp.sort_values('_score', ascending=False)['slug'].tolist()
             ),
         })
     out = pd.DataFrame(rows).sort_values('Impressions', ascending=False)
@@ -890,26 +895,35 @@ with tab3:
 
         # Expandable per query
         for q in high_queries[:30]:
-            qdata = cannibs[cannibs['query'] == q].sort_values('position')
-            best_pos   = qdata['position'].min()
-            total_impr = qdata['impressions'].sum()
+            qdata = cannibs[cannibs['query'] == q].copy()
+            # Score each page: impressions + clicks*10 — highest score = canonical winner
+            qdata['_score'] = qdata['impressions'] + (qdata['clicks'] * 10)
+            qdata_display   = qdata.sort_values('_score', ascending=False)
+            best_pos        = qdata['position'].min()
+            total_impr      = int(qdata['impressions'].sum())
+            # The winning page is the one with most traffic authority
+            best_slug       = qdata_display.iloc[0]['slug']
+            weaker_slugs    = qdata_display.iloc[1:]['slug'].tolist()
 
             with st.expander(
                 f"🔴  **{q}**  —  {len(qdata)} pages · pos {best_pos} · {total_impr:,} impressions"
             ):
-                disp = qdata.rename(columns={
+                disp = qdata_display.rename(columns={
                     'slug': 'Landing Page', 'clicks': 'Url Clicks',
                     'impressions': 'Impressions', 'ctr': 'URL CTR (%)',
                     'position': 'Average Position', 'competing_pages': 'Competing Pages',
                 })[['Landing Page', 'Url Clicks', 'Impressions', 'URL CTR (%)', 'Average Position', 'Competing Pages']]
                 st.dataframe(disp, use_container_width=True, hide_index=True)
 
-                best_slug = qdata.sort_values('position').iloc[0]['slug']
-                st.markdown(f"""
-                **Suggested action:** Consolidate weaker pages into `{best_slug}` 
-                or use `rel=canonical` to point to it. Then strengthen internal 
-                links pointing to that slug.
-                """)
+                weaker_preview = ', '.join(f'`{s}`' for s in weaker_slugs[:2])
+                if len(weaker_slugs) > 2:
+                    weaker_preview += f' +{len(weaker_slugs)-2} more'
+                st.markdown(
+                    f"**Suggested action:** Consolidate {weaker_preview} **into** "
+                    f"`{best_slug}` (highest traffic authority) · use `rel=canonical` "
+                    f"or 301 redirect on the weaker pages · then strengthen internal "
+                    f"links to `{best_slug}`."
+                )
 
         st.download_button("📥 Download High Severity CSV",
             data=to_csv(high_detail_display),
