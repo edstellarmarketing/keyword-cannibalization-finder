@@ -27,30 +27,79 @@ st.markdown("""
 /* ── Import fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
-/* ── Root variables — works on both light & dark Streamlit themes ── */
+/* ══════════════════════════════════════════════════════════
+   THEME TOKENS — light mode defaults, dark mode overrides
+   ══════════════════════════════════════════════════════════ */
 :root {
-    --orange:    #E8651A;
-    --orange-lt: rgba(232,101,26,.18);
-    --orange-br: rgba(232,101,26,.5);
-    --sky:       #4A9FD5;
-    --pale-blue: rgba(74,159,213,.15);
-    --white:     #FFFFFF;
-    --radius:    10px;
-    /* Semantic — always visible regardless of theme */
-    --txt:       #FFFFFF;          /* primary text on custom elements */
-    --txt-muted: rgba(255,255,255,.65);
-    --txt-label: rgba(255,255,255,.5);
-    --card-bg:   rgba(255,255,255,.07);
-    --card-bd:   rgba(255,255,255,.12);
-    --shadow:    0 2px 14px rgba(0,0,0,.25);
-    --shadow-lg: 0 6px 30px rgba(0,0,0,.35);
-    /* Severity */
-    --red:       #FF6B6B;
-    --red-bg:    rgba(255,107,107,.15);
-    --amber:     #FFB340;
-    --amber-bg:  rgba(255,179,64,.15);
-    --green:     #4ADE80;
-    --green-bg:  rgba(74,222,128,.15);
+    --orange:     #E8651A;
+    --orange-dk:  #c45510;
+    --radius:     10px;
+
+    /* ── LIGHT MODE (default) ── */
+    --txt:        #0F2340;
+    --txt-muted:  #3D5468;
+    --txt-label:  #5A7A96;
+    --txt-inv:    #FFFFFF;
+    --bg-card:    #FFFFFF;
+    --bg-card-alt:#F0F5FA;
+    --bd-card:    #D4DFE9;
+    --shadow:     0 2px 10px rgba(15,35,64,.10);
+    --shadow-lg:  0 6px 24px rgba(15,35,64,.15);
+    --bg-info:    rgba(74,159,213,.12);
+    --txt-info:   #1A4F8A;
+    --bd-info:    #4A9FD5;
+    --bg-note:    rgba(232,101,26,.10);
+    --txt-note:   #7A3200;
+    --bg-sidebar-rule: rgba(15,35,64,.12);
+    --bg-tab-rule: rgba(15,35,64,.12);
+    --severity-red:   #C0392B;
+    --severity-amber: #856404;
+    --severity-green: #1A6B3A;
+}
+
+/* ── DARK MODE — Streamlit adds data-theme="dark" on <html> or <body> ── */
+@media (prefers-color-scheme: dark) { :root {
+    --txt:        #FFFFFF;
+    --txt-muted:  rgba(255,255,255,.65);
+    --txt-label:  rgba(255,255,255,.45);
+    --txt-inv:    #FFFFFF;
+    --bg-card:    rgba(255,255,255,.07);
+    --bg-card-alt:rgba(255,255,255,.04);
+    --bd-card:    rgba(255,255,255,.12);
+    --shadow:     0 2px 14px rgba(0,0,0,.30);
+    --shadow-lg:  0 6px 30px rgba(0,0,0,.40);
+    --bg-info:    rgba(74,159,213,.18);
+    --txt-info:   #A8D8F0;
+    --bd-info:    #4A9FD5;
+    --bg-note:    rgba(232,101,26,.18);
+    --txt-note:   #FFD0A8;
+    --bg-sidebar-rule: rgba(255,255,255,.12);
+    --bg-tab-rule: rgba(255,255,255,.12);
+    --severity-red:   #FF6B6B;
+    --severity-amber: #FFB340;
+    --severity-green: #4ADE80;
+}}
+/* Streamlit also sets [data-theme] attribute — catch both */
+[data-theme="dark"] {
+    --txt:        #FFFFFF;
+    --txt-muted:  rgba(255,255,255,.65);
+    --txt-label:  rgba(255,255,255,.45);
+    --txt-inv:    #FFFFFF;
+    --bg-card:    rgba(255,255,255,.07);
+    --bg-card-alt:rgba(255,255,255,.04);
+    --bd-card:    rgba(255,255,255,.12);
+    --shadow:     0 2px 14px rgba(0,0,0,.30);
+    --shadow-lg:  0 6px 30px rgba(0,0,0,.40);
+    --bg-info:    rgba(74,159,213,.18);
+    --txt-info:   #A8D8F0;
+    --bd-info:    #4A9FD5;
+    --bg-note:    rgba(232,101,26,.18);
+    --txt-note:   #FFD0A8;
+    --bg-sidebar-rule: rgba(255,255,255,.12);
+    --bg-tab-rule: rgba(255,255,255,.12);
+    --severity-red:   #FF6B6B;
+    --severity-amber: #FFB340;
+    --severity-green: #4ADE80;
 }
 
 /* ── Base typography ── */
@@ -64,7 +113,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     font-size: 1.15rem;
-    color: #FFFFFF !important;
+    color: var(--txt) !important;
     border-left: 4px solid var(--orange);
     padding-left: 12px;
     margin: 28px 0 16px;
@@ -74,8 +123,8 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
 .kpi-card {
     flex: 1; min-width: 130px;
-    background: var(--card-bg);
-    border: 1px solid var(--card-bd);
+    background: var(--bg-card);
+    border: 1px solid var(--bd-card);
     border-radius: var(--radius);
     padding: 18px 20px 14px;
     box-shadow: var(--shadow);
@@ -94,7 +143,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     font-family: 'Syne', sans-serif;
     font-weight: 800;
     font-size: 1.9rem;
-    color: #FFFFFF !important;
+    color: var(--txt) !important;
     line-height: 1;
 }
 .kpi-card .kpi-sub {
@@ -103,35 +152,35 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     margin-top: 4px;
 }
 .kpi-card.accent .kpi-value { color: var(--orange) !important; }
-.kpi-card.danger .kpi-value { color: var(--red) !important; }
-.kpi-card.success .kpi-value { color: var(--green) !important; }
+.kpi-card.danger .kpi-value { color: var(--severity-red) !important; }
+.kpi-card.success .kpi-value { color: var(--severity-green) !important; }
 
 /* ── Info box ── */
 .info-box {
-    background: rgba(74,159,213,.15);
-    border-left: 4px solid #4A9FD5;
+    background: var(--bg-info);
+    border-left: 4px solid var(--bd-info);
     border-radius: 0 var(--radius) var(--radius) 0;
     padding: 14px 18px;
     font-size: 0.88rem;
-    color: #A8D8F0 !important;
+    color: var(--txt-info) !important;
     margin: 16px 0;
 }
 
 /* ── Filter note ── */
 .filter-note {
-    background: rgba(232,101,26,.15);
+    background: var(--bg-note);
     border-left: 4px solid var(--orange);
     border-radius: 0 var(--radius) var(--radius) 0;
     padding: 10px 14px;
     font-size: 0.82rem;
-    color: #FFD0A8 !important;
+    color: var(--txt-note) !important;
     margin: 8px 0 16px;
 }
 
 /* ── Rec card ── */
 .rec-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-bd);
+    background: var(--bg-card);
+    border: 1px solid var(--bd-card);
     border-radius: var(--radius);
     padding: 16px 18px;
     margin-bottom: 10px;
@@ -140,7 +189,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     font-size: 0.92rem;
-    color: #FFFFFF !important;
+    color: var(--txt) !important;
     margin: 0 0 6px;
 }
 .rec-card p { font-size: 0.84rem; color: var(--txt-muted) !important; margin: 0; }
@@ -148,24 +197,25 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 /* ── Streamlit dataframe tweak ── */
 .stDataFrame { border-radius: var(--radius); overflow: hidden; }
 
-/* ── Download btn override ── */
+/* ── Download btn ── */
 .stDownloadButton > button {
-    background: rgba(255,255,255,.1) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,.25) !important;
+    background: var(--bg-card-alt) !important;
+    color: var(--txt) !important;
+    border: 1px solid var(--bd-card) !important;
     border-radius: var(--radius) !important;
     font-weight: 600 !important;
     padding: 10px 22px !important;
     transition: all .2s !important;
 }
 .stDownloadButton > button:hover {
-    background: rgba(255,255,255,.18) !important;
-    border-color: rgba(255,255,255,.4) !important;
+    background: var(--bg-card) !important;
+    border-color: var(--orange) !important;
+    color: var(--orange) !important;
 }
 
 /* ── Primary button ── */
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, var(--orange) 0%, #c45510 100%) !important;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dk) 100%) !important;
     color: #FFFFFF !important;
     border: none !important;
     border-radius: var(--radius) !important;
@@ -173,7 +223,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     font-weight: 700 !important;
     font-size: 1rem !important;
     padding: 12px 32px !important;
-    box-shadow: 0 4px 14px rgba(232,101,26,.4) !important;
+    box-shadow: 0 4px 14px rgba(232,101,26,.40) !important;
     transition: all .2s !important;
 }
 .stButton > button[kind="primary"]:hover {
@@ -181,15 +231,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     box-shadow: 0 6px 20px rgba(232,101,26,.55) !important;
 }
 
-/* ── Sidebar: force visible label text ── */
-[data-testid="stSidebar"] .stNumberInput label,
-[data-testid="stSidebar"] .stCheckbox label,
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] div {
-    font-size: 0.83rem;
-}
+/* ── Sidebar section labels ── */
 .sidebar-section {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
@@ -198,14 +240,14 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     text-transform: uppercase;
     color: var(--orange) !important;
     padding: 12px 0 6px;
-    border-top: 1px solid rgba(255,255,255,.1);
+    border-top: 1px solid var(--bg-sidebar-rule);
     margin-top: 8px;
 }
 
 /* ── Tab bar ── */
 .stTabs [data-baseweb="tab-list"] {
     gap: 4px;
-    border-bottom: 2px solid rgba(255,255,255,.1);
+    border-bottom: 2px solid var(--bg-tab-rule);
 }
 .stTabs [data-baseweb="tab"] {
     font-family: 'Syne', sans-serif;
@@ -217,6 +259,14 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .stTabs [aria-selected="true"] {
     border-bottom: 3px solid var(--orange) !important;
 }
+
+/* ── Sidebar tip block ── */
+.sidebar-tip {
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: var(--txt-muted) !important;
+}
+.sidebar-tip b { color: var(--txt) !important; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
@@ -734,7 +784,7 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section">Recommended Settings</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div style="font-size:0.78rem; line-height:1.8; opacity:0.85;">
+    <div class="sidebar-tip">
     <b>For highest impact:</b><br>
     • Max Position → <b>10</b><br>
     • Min Impressions → <b>500</b><br>
@@ -1159,9 +1209,9 @@ with tab4:
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center; font-size:0.78rem; color:rgba(255,255,255,.4); padding:8px 0 20px;">
+<div style="text-align:center; font-size:0.78rem; color:var(--txt-muted); padding:8px 0 20px;">
     Built for Edstellar SEO team · Based on the Keyword Cannibalization Finder by 
-    <a href="https://www.leefoot.com" target="_blank" style="color:#4A9FD5;">Lee Foot</a> ·
+    <a href="https://www.leefoot.com" target="_blank" style="color:var(--orange);">Lee Foot</a> ·
     Smart geo-template filtering for corporate training page series
 </div>
 """, unsafe_allow_html=True)
